@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тренерский Хаб</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--tg-theme-bg-color, #121212);
+      color: var(--tg-theme-text-color, #ffffff);
+      padding: 16px;
+      margin: 0;
+    }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      background: #222;
+      border: 1px solid #333;
+      color: #888;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: var(--tg-theme-button-color, #2ea6ff);
+      color: #fff;
+      border-color: transparent;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .card {
+      background: var(--tg-theme-secondary-bg-color, #1e1e1e);
+      padding: 14px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #2a2a2a;
+    }
+    .card h3 { margin-top: 0; color: var(--tg-theme-button-color, #2ea6ff); }
+    .card p { white-space: pre-wrap; margin-bottom: 0; }
+
+    .form-group { margin-bottom: 12px; }
+    label { display: block; margin-bottom: 4px; font-size: 13px; color: #888; }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #1e1e1e;
+      color: #fff;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    button.submit-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: var(--tg-theme-button-color, #2ea6ff);
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Навигация -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('plan')">Мой план</button>
+    <button class="tab-btn" onclick="switchTab('report')">Отправить отчет</button>
+  </div>
+
+  <!-- Вкладка 1: План -->
+  <div id="planTab" class="tab-content active">
+    <div id="planContainer">Загрузка вашего плана...</div>
+  </div>
+
+  <!-- Вкладка 2: Отчет -->
+  <div id="reportTab" class="tab-content">
+    <form id="reportForm">
+      <div class="form-group">
+        <label>Вес (кг)</label>
+        <input type="number" step="0.1" id="weight" required placeholder="например: 75.5">
+      </div>
+      <div class="form-group">
+        <label>Выполнение плана / Оценка недели</label>
+        <input type="text" id="compliance" required placeholder="например: 100% все тренировки">
+      </div>
+      <div class="form-group">
+        <label>Ссылка на видео техники</label>
+        <input type="url" id="videoUrl" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label>Комментарии и самочувствие</label>
+        <textarea id="notes" rows="3" placeholder="Болели ли суставы, как сон, сила..."></textarea>
+      </div>
+      <button type="submit" class="submit-btn">Отправить отчет</button>
+    </form>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPvG0SOx9GJzzK3vFtjAhmn6nJomlRnnCsf1W6b8ZuBDt3s-ybbUq0ZL1zZ_wSsc6Q/exec";
+    const user = tg.initDataUnsafe?.user || {};
+
+    // Переключение вкладок
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      if(tab === 'plan') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('planTab').classList.add('active');
+      } else {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('reportTab').classList.add('active');
+      }
+    }
+
+    // Загрузка плана
+    async function loadPlan() {
+      const container = document.getElementById('planContainer');
+      if (!user.username) {
+        container.innerHTML = "<div class='card'><p>Не удалось определить Telegram Username. Установите username в настройках Telegram.</p></div>";
+        return;
+      }
+
+      try {
+        const res = await fetch(`${SCRIPT_URL}?username=${user.username}`);
+        const data = await res.json();
+
+        if (data.status === "success") {
+          container.innerHTML = `
+            <div class="card">
+              <h3>🏋️ Тренировки</h3>
+              <p>${data.workout}</p>
+            </div>
+            <div class="card">
+              <h3>🥗 Питание (КБЖУ и меню)</h3>
+              <p>${data.nutrition}</p>
+            </div>
+            ${data.note ? `<div class="card"><h3>📌 Заметка от тренера</h3><p>${data.note}</p></div>` : ''}
+          `;
+        } else {
+          container.innerHTML = `<div class="card"><p>${data.message}</p></div>`;
+        }
+      } catch (err) {
+        container.innerHTML = "<div class='card'><p>Ошибка загрузки плана.</p></div>";
+      }
+    }
+
+    // Отправка отчета
+    document.getElementById('reportForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        date: new Date().toLocaleString("ru-RU"),
+        username: user.username || "no_username",
+        firstName: user.first_name || "Ученик",
+        weight: document.getElementById('weight').value,
+        compliance: document.getElementById('compliance').value,
+        videoUrl: document.getElementById('videoUrl').value,
+        notes: document.getElementById('notes').value
+      };
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        tg.showAlert("Отчет сохранен!");
+        tg.close();
+      } catch (err) {
+        tg.showAlert("Ошибка при отправке.");
+      }
+    });
+
+    // Инициализация при старте
+    loadPlan();
+  </script>
+</body>
+</html>
