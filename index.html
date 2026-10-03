@@ -3,187 +3,254 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Тренерский Хаб</title>
+  <title>Тренерский хаб</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--tg-theme-bg-color, #121212);
-      color: var(--tg-theme-text-color, #ffffff);
-      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #111827;
+      color: #f9fafb;
       margin: 0;
+      padding: 16px;
+      box-sizing: border-box;
     }
-    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
     .tab-btn {
       flex: 1;
       padding: 10px;
-      background: #222;
-      border: 1px solid #333;
-      color: #888;
+      border: none;
       border-radius: 8px;
-      font-weight: bold;
+      background-color: #1f2937;
+      color: #9ca3af;
+      font-weight: 600;
       cursor: pointer;
     }
     .tab-btn.active {
-      background: var(--tg-theme-button-color, #2ea6ff);
-      color: #fff;
-      border-color: transparent;
+      background-color: #3b82f6;
+      color: #ffffff;
     }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-
+    .content-section {
+      display: none;
+    }
+    .content-section.active {
+      display: block;
+    }
     .card {
-      background: var(--tg-theme-secondary-bg-color, #1e1e1e);
-      padding: 14px;
-      border-radius: 10px;
+      background-color: #1f2937;
+      border-radius: 12px;
+      padding: 16px;
       margin-bottom: 12px;
-      border: 1px solid #2a2a2a;
     }
-    .card h3 { margin-top: 0; color: var(--tg-theme-button-color, #2ea6ff); }
-    .card p { white-space: pre-wrap; margin-bottom: 0; }
-
-    .form-group { margin-bottom: 12px; }
-    label { display: block; margin-bottom: 4px; font-size: 13px; color: #888; }
+    .card h3 {
+      margin-top: 0;
+      color: #60a5fa;
+      font-size: 16px;
+    }
+    .card p {
+      margin: 0;
+      white-space: pre-wrap;
+      color: #e5e7eb;
+      line-height: 1.4;
+    }
+    .field {
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 4px;
+    }
     input, textarea {
       width: 100%;
       padding: 10px;
       border-radius: 8px;
-      border: 1px solid #333;
-      background: #1e1e1e;
-      color: #fff;
+      border: 1px solid #374151;
+      background-color: #111827;
+      color: #ffffff;
       box-sizing: border-box;
-      font-size: 16px;
+      font-size: 14px;
     }
-    button.submit-btn {
+    input[type="file"] {
+      padding: 6px;
+    }
+    .submit-btn {
       width: 100%;
       padding: 12px;
       border: none;
       border-radius: 8px;
-      background: var(--tg-theme-button-color, #2ea6ff);
-      color: #fff;
+      background-color: #3b82f6;
+      color: #ffffff;
       font-weight: bold;
-      cursor: pointer;
       font-size: 16px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .submit-btn:disabled {
+      background-color: #4b5563;
+      cursor: not-allowed;
     }
   </style>
 </head>
 <body>
 
-  <!-- Навигация -->
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('plan')">Мой план</button>
     <button class="tab-btn" onclick="switchTab('report')">Отправить отчет</button>
   </div>
 
-  <!-- Вкладка 1: План -->
-  <div id="planTab" class="tab-content active">
-    <div id="planContainer">Загрузка вашего плана...</div>
+  <!-- Секция Плана -->
+  <div id="plan-section" class="content-section active">
+    <div class="card">
+      <h3>🏋️ Тренировки</h3>
+      <p id="workout-plan">Загрузка...</p>
+    </div>
+    <div class="card">
+      <h3>🥗 Питание (КБЖУ и меню)</h3>
+      <p id="nutrition-plan">Загрузка...</p>
+    </div>
+    <div class="card">
+      <h3>📌 Заметка от тренера</h3>
+      <p id="trainer-note">Загрузка...</p>
+    </div>
   </div>
 
-  <!-- Вкладка 2: Отчет -->
-  <div id="reportTab" class="tab-content">
-    <form id="reportForm">
-      <div class="form-group">
+  <!-- Секция Отчета -->
+  <div id="report-section" class="content-section">
+    <div class="card">
+      <div class="field">
         <label>Вес (кг)</label>
-        <input type="number" step="0.1" id="weight" required placeholder="например: 75.5">
+        <input type="text" id="weight" placeholder="например: 75.5">
       </div>
-      <div class="form-group">
+      <div class="field">
         <label>Выполнение плана / Оценка недели</label>
-        <input type="text" id="compliance" required placeholder="например: 100% все тренировки">
+        <input type="text" id="completion" placeholder="например: 100% все тренировки">
       </div>
-      <div class="form-group">
-        <label>Ссылка на видео техники</label>
-        <input type="url" id="videoUrl" placeholder="https://...">
+      <div class="field">
+        <label>Видео техники (выбрать из галереи)</label>
+        <input type="file" id="videoFile" accept="video/*">
       </div>
-      <div class="form-group">
+      <div class="field">
         <label>Комментарии и самочувствие</label>
-        <textarea id="notes" rows="3" placeholder="Болели ли суставы, как сон, сила..."></textarea>
+        <textarea id="comments" rows="3" placeholder="Болели ли суставы, как сон, сила..."></textarea>
       </div>
-      <button type="submit" class="submit-btn">Отправить отчет</button>
-    </form>
+      <button class="submit-btn" id="sendBtn" onclick="sendReport()">Отправить отчет</button>
+    </div>
   </div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPvG0SOx9GJzzK3vFtjAhmn6nJomlRnnCsf1W6b8ZuBDt3s-ybbUq0ZL1zZ_wSsc6Q/exec";
-    const user = tg.initDataUnsafe?.user || {};
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzLx4E3PQ32BoXgCIPpSfjtt_0Ru88MLTQ8xiKAxWIvQhy43ET0jOhaekUneYVUVkjp/exec';
 
-    // Переключение вкладок
-    function switchTab(tab) {
+    function switchTab(tabName) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      
-      if(tab === 'plan') {
+      document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+
+      if (tabName === 'plan') {
         document.querySelectorAll('.tab-btn')[0].classList.add('active');
-        document.getElementById('planTab').classList.add('active');
+        document.getElementById('plan-section').classList.add('active');
       } else {
         document.querySelectorAll('.tab-btn')[1].classList.add('active');
-        document.getElementById('reportTab').classList.add('active');
+        document.getElementById('report-section').classList.add('active');
       }
     }
 
-    // Загрузка плана
     async function loadPlan() {
-      const container = document.getElementById('planContainer');
-      if (!user.username) {
-        container.innerHTML = "<div class='card'><p>Не удалось определить Telegram Username. Установите username в настройках Telegram.</p></div>";
+      const username = tg.initDataUnsafe?.user?.username || "";
+      if (!username) {
+        document.getElementById('workout-plan').innerText = "Ошибка: не удалось определить Telegram Username.";
         return;
       }
 
       try {
-        const res = await fetch(`${SCRIPT_URL}?username=${user.username}`);
-        const data = await res.json();
+        const response = await fetch(`${SCRIPT_URL}?username=${username}`);
+        const data = await response.json();
 
-        if (data.status === "success") {
-          container.innerHTML = `
-            <div class="card">
-              <h3>🏋️ Тренировки</h3>
-              <p>${data.workout}</p>
-            </div>
-            <div class="card">
-              <h3>🥗 Питание (КБЖУ и меню)</h3>
-              <p>${data.nutrition}</p>
-            </div>
-            ${data.note ? `<div class="card"><h3>📌 Заметка от тренера</h3><p>${data.note}</p></div>` : ''}
-          `;
+        if (data.status === 'success') {
+          document.getElementById('workout-plan').innerText = data.data.workout || "Не заполнено";
+          document.getElementById('nutrition-plan').innerText = data.data.nutrition || "Не заполнено";
+          document.getElementById('trainer-note').innerText = data.data.note || "Не заполнено";
         } else {
-          container.innerHTML = `<div class="card"><p>${data.message}</p></div>`;
+          document.getElementById('workout-plan').innerText = "План не найден.";
+          document.getElementById('nutrition-plan').innerText = "План не найден.";
+          document.getElementById('trainer-note').innerText = "План не найден.";
         }
       } catch (err) {
-        container.innerHTML = "<div class='card'><p>Ошибка загрузки плана.</p></div>";
+        document.getElementById('workout-plan').innerText = "Ошибка загрузки плана.";
       }
     }
 
-    // Отправка отчета
-    document.getElementById('reportForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    async function sendReport() {
+      const btn = document.getElementById('sendBtn');
+      const fileInput = document.getElementById('videoFile');
+      const file = fileInput.files[0];
+
+      btn.disabled = true;
+      btn.innerText = "Отправка...";
+
+      let fileData = null;
+      let fileName = null;
+      let fileType = null;
+
+      if (file) {
+        if (file.size > 50 * 1024 * 1024) {
+          alert("Видео слишком большое. Выберите файл до 50 МБ.");
+          btn.disabled = false;
+          btn.innerText = "Отправить отчет";
+          return;
+        }
+        fileData = await readFileAsDataURL(file);
+        fileName = file.name;
+        fileType = file.type;
+      }
+
       const payload = {
-        date: new Date().toLocaleString("ru-RU"),
-        username: user.username || "no_username",
-        firstName: user.first_name || "Ученик",
+        username: tg.initDataUnsafe?.user?.username || "неизвестно",
         weight: document.getElementById('weight').value,
-        compliance: document.getElementById('compliance').value,
-        videoUrl: document.getElementById('videoUrl').value,
-        notes: document.getElementById('notes').value
+        completion: document.getElementById('completion').value,
+        comments: document.getElementById('comments').value,
+        fileData: fileData,
+        fileName: fileName,
+        fileType: fileType
       };
 
       try {
-        await fetch(SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
           body: JSON.stringify(payload)
         });
-        tg.showAlert("Отчет сохранен!");
-        tg.close();
-      } catch (err) {
-        tg.showAlert("Ошибка при отправке.");
-      }
-    });
+        const result = await res.json();
 
-    // Инициализация при старте
+        if (result.status === 'success') {
+          alert("Отчет успешно отправлен!");
+          tg.close();
+        } else {
+          alert("Ошибка отправки: " + result.message);
+          btn.disabled = false;
+          btn.innerText = "Отправить отчет";
+        }
+      } catch (err) {
+        alert("Ошибка сети при отправке.");
+        btn.disabled = false;
+        btn.innerText = "Отправить отчет";
+      }
+    }
+
+    function readFileAsDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
     loadPlan();
   </script>
 </body>
